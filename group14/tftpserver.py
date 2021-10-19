@@ -118,6 +118,17 @@ def socket_setup():
 ####################################################
 # Write additional helper functions starting here  #
 ####################################################
+def receive_request():
+    pass
+
+def parse_request():
+    pass
+
+def verify_request():
+    pass
+
+def send_error():
+    pass
 
 ############################################### JOSIAH
 
