@@ -49,7 +49,8 @@ def main():
     ####################################################
 
 
-    ################################################JOSIAH ^ ELY
+    ################################################JOSIAH ^ ELI
+
 
 
     ####################################################
@@ -119,4 +120,48 @@ def socket_setup():
 ####################################################
 
 ############################################### JOSIAH
+
+def read_file(file_name):
+    """
+    :author: Elisha Hamp
+    Takes in a file_name and uses it to create blocks
+    :param file_name:
+    :return:
+    """
+    pass
+
+
+def send_block(number, block):
+    """
+    :author: Elisha Hamp
+    Takes in the block number and the block of bits to send,
+    and assembles a message to be sent using the info provided.
+    :param number:
+    :param block:
+    :return:
+    """
+    pass
+
+
+def wait_for_ack(number):
+    """
+    Takes in the block number of the block which was just sent, then waits
+    for the client ack message. It then either times out or receives an ack.
+    If it receives an ack, it then compares the ack number to the param number.
+    :param number:
+    :return:
+    """
+    pass
+
+
+def parse_ack(ack):
+    """
+    :author: Elisha Hamp
+    parses the ack
+    :param ack:
+    :return:
+    """
+    pass
+
+
 main()
