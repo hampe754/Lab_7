@@ -1,11 +1,11 @@
 """
 - NOTE: REPLACE 'N' Below with your section, year, and lab number
-- CS2911 - 0NN
-- Fall 202N
-- Lab N
+- CS2911 - 051
+- Fall 2021
+- Lab 07
 - Names:
-  - 
-  - 
+  - Elisha Hamp
+  - Josiah Clausen
 
 A Trivial File Transfer Protocol Server
 
