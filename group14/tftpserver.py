@@ -52,6 +52,8 @@ def main():
 
     ################################################JOSIAH ^ ELI
 
+
+
     ####################################################
     # Your code ends here                              #
     ####################################################
@@ -164,35 +166,44 @@ def verify_request(request_line):
     return is_request
 
 
+
 def send_error():
     pass
 
 
 ############################################### JOSIAH
 
-def read_file(file_name):
+
+def read_file(file_name, data_socket):
     """
     :author: Elisha Hamp
     Takes in a file_name and uses it to create blocks
     :param file_name:
     :return:
     """
-    pass
+    count = get_file_block_count(file_name)
+    for i in range(1, count):
+        block = get_file_block(file_name, i)
+        send_block(i, block, data_socket)
+        wait_for_ack(i, data_socket)
 
 
-def send_block(number, block):
+def send_block(b_num, block, data_socket):
     """
     :author: Elisha Hamp
     Takes in the block number and the block of bits to send,
     and assembles a message to be sent using the info provided.
-    :param number:
+    :param b_num:
     :param block:
     :return:
     """
-    pass
+    code = b'\x00\x03'
+    block_num = b_num.to_bytes(2, 'big')
+    response = code + block_num + block
+    data_socket.sendall(response)
 
 
-def wait_for_ack(number):
+def wait_for_ack(b_num, data_socket):
     """
     Takes in the block number of the block which was just sent, then waits
     for the client ack message. It then either times out or receives an ack.
@@ -200,17 +211,18 @@ def wait_for_ack(number):
     :param number:
     :return:
     """
-    pass
+    data_socket.settimeout(10)
+    parse_ack(data_socket.recv(4), b_num)
 
 
-def parse_ack(ack):
+def parse_ack(ack, b_num):
     """
     :author: Elisha Hamp
     parses the ack
     :param ack:
     :return:
     """
-    pass
+    print(ack[0 : 2])
 
 
 main()
