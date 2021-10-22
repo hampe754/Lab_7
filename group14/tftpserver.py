@@ -48,6 +48,7 @@ def main():
     #   functions as needed                            #
     ####################################################
 
+    print(parse_request(receive_request(client_socket)))
 
     ################################################JOSIAH ^ ELI
 
@@ -118,10 +119,35 @@ def socket_setup():
 ####################################################
 # Write additional helper functions starting here  #
 ####################################################
-def receive_request():
+def receive_request(receive_request):
+    byte = receive_request.recv(1024)
+    print(str(byte)+"THIS IS THE BYTES RECIEVED")
+    return byte
     pass
 
-def parse_request():
+
+def parse_request(request):
+    """
+    Gets the request and determines what to do with it
+    :param request:
+    :return:
+    """
+    type = request[0: 2]
+    print(str(type)+"THIS IS THE FIRST BYTE")
+    op_code = 5
+    file_name = b''
+    mode = b''
+    if type == b'\x00\x01':
+        op_code = 1
+        code = request.replace(b'\x00\01', b'')
+        print("GETFILE HAS BEEN CHOSEN")
+        file_name = code[0: code.index(b'\x00')]
+        print(file_name)
+        code = code.replace(file_name+b'\x00', b'')
+        mode = code[0: code.index(b'\x00')]
+        print(mode)
+
+    return op_code, file_name, mode
     pass
 
 def verify_request():
