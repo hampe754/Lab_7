@@ -52,8 +52,6 @@ def main():
 
     ################################################JOSIAH ^ ELI
 
-
-
     ####################################################
     # Your code ends here                              #
     ####################################################
@@ -84,7 +82,7 @@ def get_file_block(filename, block_number):
     :return: The data contents (as a bytes object) of the file block
     """
     file = open(filename, 'rb')
-    block_byte_offset = (block_number-1) * TFTP_BLOCK_SIZE
+    block_byte_offset = (block_number - 1) * TFTP_BLOCK_SIZE
     file.seek(block_byte_offset)
     block_data = file.read(TFTP_BLOCK_SIZE)
     file.close()
@@ -100,7 +98,7 @@ def put_file_block(filename, block_data, block_number):
     :return: Nothing
     """
     file = open(filename, 'wb')
-    block_byte_offset = (block_number-1) * TFTP_BLOCK_SIZE
+    block_byte_offset = (block_number - 1) * TFTP_BLOCK_SIZE
     file.seek(block_byte_offset)
     file.write(block_data)
     file.close()
@@ -121,7 +119,7 @@ def socket_setup():
 ####################################################
 def receive_request(receive_request):
     byte = receive_request.recv(1024)
-    print(str(byte)+"THIS IS THE BYTES RECIEVED")
+    print(str(byte) + "THIS IS THE BYTES RECIEVED")
     return byte
     pass
 
@@ -132,29 +130,43 @@ def parse_request(request):
     :param request:
     :return:
     """
-    type = request[0: 2]
-    print(str(type)+"THIS IS THE FIRST BYTE")
     op_code = 5
     file_name = b''
     mode = b''
-    if type == b'\x00\x01':
+    if verify_request(request):
+        print(str(type) + "THIS IS THE FIRST BYTE")
         op_code = 1
         code = request.replace(b'\x00\01', b'')
         print("GETFILE HAS BEEN CHOSEN")
         file_name = code[0: code.index(b'\x00')]
         print(file_name)
-        code = code.replace(file_name+b'\x00', b'')
+        code = code.replace(file_name + b'\x00', b'')
         mode = code[0: code.index(b'\x00')]
         print(mode)
-
+    else:
+        send_error()
     return op_code, file_name, mode
-    pass
 
-def verify_request():
-    pass
+
+def verify_request(request_line):
+    """
+    This method checks if the request line is a read request and that it has
+    the proper amount of breaks in it
+    :param request_line:
+    :return:
+    """
+    is_request = True
+    if request_line.count(b'\x00') != 3:
+        is_request = False
+    type = request_line[0: 2]
+    if type == b'\x00\x01':
+        is_request = False
+    return is_request
+
 
 def send_error():
     pass
+
 
 ############################################### JOSIAH
 
