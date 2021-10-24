@@ -227,7 +227,8 @@ def wait_for_ack(b_num, data_socket):
     :return:
     """
     data_socket.settimeout(10)
-    parse_ack(data_socket.recv(4), b_num)
+    message, address = data_socket.recvfrom(MAX_UDP_PACKET_SIZE)
+    parse_ack(message, b_num)
 
 
 def parse_ack(ack, b_num):
@@ -237,7 +238,8 @@ def parse_ack(ack, b_num):
     :param ack:
     :return:
     """
-    print(ack[0: 2])
+    print(ack[0 : 2])
+    print(ack[2 : 4])
 
 
 main()
