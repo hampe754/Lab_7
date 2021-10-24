@@ -48,11 +48,14 @@ def main():
     #   functions as needed                            #
     ####################################################
 
-    print(parse_request(receive_request(client_socket)))
+    message, address = receive_request(client_socket)
+    op_code, file_name, mode, error = parse_request(message)
+    if not error:
+        read_file(file_name, client_socket, address)
+    else:
+        send_error(client_socket, address)
 
     ################################################JOSIAH ^ ELI
-
-
 
     ####################################################
     # Your code ends here                              #
@@ -120,10 +123,13 @@ def socket_setup():
 # Write additional helper functions starting here  #
 ####################################################
 def receive_request(receive_request):
-    byte = receive_request.recv(1024)
-    print(str(byte) + "THIS IS THE BYTES RECIEVED")
-    return byte
-    pass
+    """
+    This method recives the request from a client
+    :param receive_request:
+    :return: the request from the client in bytes
+    """
+    byte, address = receive_request.recvfrom(MAX_UDP_PACKET_SIZE)
+    return byte, address
 
 
 def parse_request(request):
@@ -135,6 +141,7 @@ def parse_request(request):
     op_code = 5
     file_name = b''
     mode = b''
+    error = False
     if verify_request(request):
         print(str(type) + "THIS IS THE FIRST BYTE")
         op_code = 1
@@ -146,8 +153,8 @@ def parse_request(request):
         mode = code[0: code.index(b'\x00')]
         print(mode)
     else:
-        send_error()
-    return op_code, file_name, mode
+        error = True
+    return op_code, file_name, mode, error
 
 
 def verify_request(request_line):
@@ -161,34 +168,41 @@ def verify_request(request_line):
     if request_line.count(b'\x00') != 3:
         is_request = False
     type = request_line[0: 2]
-    if type == b'\x00\x01':
+    if type != b'\x00\x01':
         is_request = False
     return is_request
 
 
+def send_error(client_socket, address):
+    #is_response = b''
 
-def send_error():
-    pass
+    #run = True
+    #while run:
+    client_socket.sendto(b'\x00\x05\x00\x04\x40sfdsadsfa\x00', address)
+        #is_response, address = client_socket.recvfrom(MAX_UDP_PACKET_SIZE)
+        #if is_response == b'\x00\x04\x00\x01':
+          #  run = False
+   # print(is_response)
 
 
 ############################################### JOSIAH
 
 
-def read_file(file_name, data_socket):
+def read_file(file_name, data_socket, address):
     """
     :author: Elisha Hamp
     Takes in a file_name and uses it to create blocks
     :param file_name:
     :return:
     """
-    count = get_file_block_count(file_name)
+    count = get_file_block_count(file_name)+1
     for i in range(1, count):
         block = get_file_block(file_name, i)
-        send_block(i, block, data_socket)
+        send_block(i, block, data_socket, address)
         wait_for_ack(i, data_socket)
 
 
-def send_block(b_num, block, data_socket):
+def send_block(b_num, block, data_socket, address):
     """
     :author: Elisha Hamp
     Takes in the block number and the block of bits to send,
@@ -200,7 +214,8 @@ def send_block(b_num, block, data_socket):
     code = b'\x00\x03'
     block_num = b_num.to_bytes(2, 'big')
     response = code + block_num + block
-    data_socket.sendall(response)
+    print(response)
+    data_socket.sendto(response, address)
 
 
 def wait_for_ack(b_num, data_socket):
@@ -222,7 +237,7 @@ def parse_ack(ack, b_num):
     :param ack:
     :return:
     """
-    print(ack[0 : 2])
+    print(ack[0: 2])
 
 
 main()
