@@ -199,7 +199,8 @@ def read_file(file_name, data_socket, address):
     for i in range(1, count):
         block = get_file_block(file_name, i)
         send_block(i, block, data_socket, address)
-        wait_for_ack(i, data_socket)
+        if not wait_for_ack(i, data_socket):
+            i -= 1
 
 
 def send_block(b_num, block, data_socket, address):
@@ -223,23 +224,34 @@ def wait_for_ack(b_num, data_socket):
     Takes in the block number of the block which was just sent, then waits
     for the client ack message. It then either times out or receives an ack.
     If it receives an ack, it then compares the ack number to the param number.
-    :param number:
+    :param b_num:
     :return:
     """
     data_socket.settimeout(10)
-    message, address = data_socket.recvfrom(MAX_UDP_PACKET_SIZE)
-    parse_ack(message, b_num)
+    positive_ack = False
+    try:
+        ack, address = data_socket.recvfrom(MAX_UDP_PACKET_SIZE)
+        code, received_b_num = parse_ack(ack)
+        if int.from_bytes(code,'big') == 4 and received_b_num == b_num:
+            positive_ack = True
+    except TimeoutError:
+        return False
+    return positive_ack
 
 
-def parse_ack(ack, b_num):
+def parse_ack(ack):
     """
     :author: Elisha Hamp
-    parses the ack
+    parses the acknowledgement response.
     :param ack:
     :return:
     """
-    print(ack[0 : 2])
-    print(ack[2 : 4])
+    code = ack[0: 2]
+    print(code)
+    b_num = ack[2: 4]
+    print(b_num)
+
+    return code, b_num
 
 
 main()
