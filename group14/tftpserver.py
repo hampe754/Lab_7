@@ -57,8 +57,6 @@ def main():
     else:
         send_error(client_socket, address, 1)
 
-    ################################################JOSIAH ^ ELI
-
     ####################################################
     # Your code ends here                              #
     ####################################################
@@ -74,7 +72,7 @@ def get_file_block_count(filename):
     """
     try:
         # Use the OS call to get the file size
-        #   This function throws an exception if the file doesn't exist
+        # This function throws an exception if the file doesn't exist
         file_size = os.stat(filename).st_size
         return math.ceil(file_size / TFTP_BLOCK_SIZE)
     except:
@@ -126,7 +124,8 @@ def socket_setup():
 ####################################################
 def receive_request(receive_request):
     """
-    This method recives the request from a client
+    This method receives the request from a client using UDP and gets the
+    address as well as the message
     :param receive_request: the socket that is used to receive from the client
     TFTP
     :return: the request from the client in bytes
@@ -191,10 +190,9 @@ def send_error(client_socket, address, error_code):
         client_socket.sendto(b'\x00\x05\x00\x04\x40The '
                              b'request was invalid or not covered by this server\x00', address)
     elif error_code == 2:
-        client_socket.sendto(b'\x00\x05\x00\x04\x40The file you requested does not exist\x00', address)
+        client_socket.sendto(b'\x00\x05\x00\x01\x40The file you requested does not exist\x00', address)
     else:
-        client_socket.sendto(b'\x00\x05\x00\x04\x40Something went wrong we dont know what\x00', address)
-
+        client_socket.sendto(b'\x00\x05\x00\x00\x40Something went wrong we dont know what\x00', address)
 
 
 ############################################### JOSIAH
@@ -209,7 +207,7 @@ def read_file(file_name, data_socket, address):
     """
     file_exists = exists(file_name)
     if file_exists:
-        count = get_file_block_count(file_name)+1
+        count = get_file_block_count(file_name) + 1
         for i in range(1, count):
             block = get_file_block(file_name, i)
             send_block(i, block, data_socket, address)
@@ -217,6 +215,7 @@ def read_file(file_name, data_socket, address):
                 i -= 1
     else:
         send_error(data_socket, address, 2)
+
 
 def send_block(b_num, block, data_socket, address):
     """
@@ -247,7 +246,7 @@ def wait_for_ack(b_num, data_socket):
     try:
         ack, address = data_socket.recvfrom(MAX_UDP_PACKET_SIZE)
         code, received_b_num = parse_ack(ack)
-        if int.from_bytes(code,'big') == 4 and received_b_num == b_num:
+        if int.from_bytes(code, 'big') == 4 and received_b_num == b_num:
             positive_ack = True
     except TimeoutError:
         return False
