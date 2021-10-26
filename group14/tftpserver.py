@@ -259,7 +259,7 @@ def receive_ack(b_num, client_socket):
     positive_ack = False
     ack, address = client_socket.recvfrom(MAX_UDP_PACKET_SIZE)
     code, received_b_num = parse_ack(ack)
-    if code == 4 and int.from_bytes(b_num, 'big') == b_num:
+    if code == 4 and b_num == b_num:
         positive_ack = True
     return positive_ack
 
