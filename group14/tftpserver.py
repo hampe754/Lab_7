@@ -9,15 +9,14 @@
 A Trivial File Transfer Protocol Server
 
 Introduction:
+Introduces us students to TFTP. This is accomplished by having us a create a TFTP server that is capable
+of receiving a GET request, handling sending a file in blocks, and properly responding to acknowledgement packages.
 
-
-
-
-Summary: (Summarize your experience with the lab, what you learned, what you liked,what you disliked, and any suggestions you have for improvement)
-
-
-
-
+Summary:
+This lab was a fun one due to the rfc being so short, it allowed for a fairly straightforward implementation
+of all the desired features. The best part of the lab was reading about the different packets, as the documentation
+was very easy to understand. The worst part was our own understanding of how to use the UDP sending and receiving
+functions. One change which we could recommend is some better way for us to test a socket timeout.
 
 """
 
