@@ -1,5 +1,4 @@
 """
-- NOTE: REPLACE 'N' Below with your section, year, and lab number
 - CS2911 - 051
 - Fall 2021
 - Lab 07
@@ -9,7 +8,7 @@
 
 A Trivial File Transfer Protocol Server
 
-Introduction: (Describe the lab in your own words)
+Introduction:
 
 
 
@@ -44,22 +43,12 @@ def main():
 
     print("Server is ready to receive a request")
 
-    ####################################################
-    # Your code starts here                            #
-    #   Be sure to design and implement additional     #
-    #   functions as needed                            #
-    ####################################################
-
     message, address = receive_request(client_socket)
     op_code, file_name, mode, error = parse_request(message)
     if not error:
         read_file(file_name, client_socket, address)
     else:
         send_error(client_socket, address, 1)
-
-    ####################################################
-    # Your code ends here                              #
-    ####################################################
 
     client_socket.close()
 
@@ -119,18 +108,15 @@ def socket_setup():
     return s
 
 
-####################################################
-# Write additional helper functions starting here  #
-####################################################
-def receive_request(receive_request):
+def receive_request(request_socket):
     """
     This method receives the request from a client using UDP and gets the
     address as well as the message
-    :param receive_request: the socket that is used to receive from the client
+    :param request_socket: the socket that is used to receive from the client
     TFTP
     :return: the request from the client in bytes
     """
-    byte, address = receive_request.recvfrom(MAX_UDP_PACKET_SIZE)
+    byte, address = request_socket.recvfrom(MAX_UDP_PACKET_SIZE)
     return byte, address
 
 
@@ -170,8 +156,8 @@ def verify_request(request_line):
     is_request = True
     if request_line.count(b'\x00') != 3:
         is_request = False
-    type = request_line[0: 2]
-    if type != b'\x00\x01':
+    req_type = request_line[0: 2]
+    if req_type != b'\x00\x01':
         is_request = False
     return is_request
 
@@ -195,61 +181,87 @@ def send_error(client_socket, address, error_code):
         client_socket.sendto(b'\x00\x05\x00\x00\x40Something went wrong we dont know what\x00', address)
 
 
-############################################### JOSIAH
-
-
-def read_file(file_name, data_socket, address):
+def read_file(file_name, client_socket, address):
     """
     :author: Elisha Hamp
-    Takes in a file_name and uses it to create blocks
-    :param file_name:
-    :return:
+    Takes in a file_name and uses it to learn how many blocks are in the file before sending it.
+    :param file_name: file requested by the client
+    :param client_socket: socket of the client
+    :param address: address received from the client
     """
-    file_exists = exists(file_name)
-    if file_exists:
-        count = get_file_block_count(file_name) + 1
-        for i in range(1, count):
-            block = get_file_block(file_name, i)
-            send_block(i, block, data_socket, address)
-            if not wait_for_ack(i, data_socket):
-                i -= 1
+    file_exist = exists(file_name)
+    if file_exist:
+        send_file(file_name, client_socket, address)
     else:
-        send_error(data_socket, address, 2)
+        send_error(client_socket, address, 2)
 
 
-def send_block(b_num, block, data_socket, address):
+def send_file(file_name, client_socket, address):
+    """
+    :author: Elisha Hamp
+    Uses the requested file name to create blocks, ensuring that each one gets sent.
+    :param file_name: Name of the client selected file.
+    :param client_socket: the socket of the client that made the request
+    :param address: address received from receiving bytes from the client
+    """
+    num_blocks = get_file_block_count(file_name)
+    i = 1
+    while i <= num_blocks:
+        block = get_file_block(file_name, i)
+        send_block(i, block, client_socket, address)
+        if wait_for_ack(i, client_socket):
+            i += 1
+
+
+def send_block(b_num, block, client_socket, address):
     """
     :author: Elisha Hamp
     Takes in the block number and the block of bits to send,
     and assembles a message to be sent using the info provided.
+    :param client_socket: the socket of the client that made the request
+    :param address: address received from receiving bytes from the client
     :param b_num:
     :param block:
-    :return:
+    :
     """
     code = b'\x00\x03'
     block_num = b_num.to_bytes(2, 'big')
     response = code + block_num + block
-    print(response)
-    data_socket.sendto(response, address)
+    client_socket.sendto(response, address)
 
 
-def wait_for_ack(b_num, data_socket):
+def wait_for_ack(b_num, client_socket):
     """
     Takes in the block number of the block which was just sent, then waits
     for the client ack message. It then either times out or receives an ack.
     If it receives an ack, it then compares the ack number to the param number.
-    :param b_num:
-    :return:
+    :param b_num: the number of the block which was just sent
+    :param client_socket: the socket of the client that made the request
+    :return: whether the ack received was positive
     """
-    data_socket.settimeout(10)
+    client_socket.settimeout(5)
     positive_ack = False
     try:
-        ack, address = data_socket.recvfrom(MAX_UDP_PACKET_SIZE)
-        code, received_b_num = parse_ack(ack)
-        if int.from_bytes(code, 'big') == 4 and received_b_num == b_num:
-            positive_ack = True
+        positive_ack = receive_ack(b_num, client_socket)
     except TimeoutError:
-        return False
+        return positive_ack
+    return positive_ack
+
+
+def receive_ack(b_num, client_socket):
+    """
+    :author: Elisha Hamp
+    Receives an acknowledgement packet and uses it to determine whether
+    the ack is useful or if a packet needs to be resent.
+    :param b_num: the number of the block which was just sent
+    :param client_socket: the socket of the client that made the request
+    :return: whether the ack received was positive
+    """
+    positive_ack = False
+    ack, address = client_socket.recvfrom(MAX_UDP_PACKET_SIZE)
+    code, received_b_num = parse_ack(ack)
+    if code == 4 and int.from_bytes(b_num, 'big') == b_num:
+        positive_ack = True
     return positive_ack
 
 
@@ -257,13 +269,11 @@ def parse_ack(ack):
     """
     :author: Elisha Hamp
     parses the acknowledgement response.
-    :param ack:
-    :return:
+    :param ack: The acknowledgement bytes received.
+    :return: the operation-code and block number received from the acknowledgement.
     """
-    code = ack[0: 2]
-    print(code)
-    b_num = ack[2: 4]
-    print(b_num)
+    code = int.from_bytes(ack[0: 2], 'big')
+    b_num = int.from_bytes(ack[2: 4], 'big')
 
     return code, b_num
 
